@@ -58,7 +58,7 @@ class WalletServiceTest {
         double depositAmount = 50.0;
         Wallet wallet = new Wallet(walletId, initialBalance);
 
-        when(walletRepository.findByWalletId(walletId)).thenReturn(wallet);
+        when(walletRepository.findByWalletIdAndLock(walletId)).thenReturn(wallet);
 
         double newBalance = walletService.operateOnWallet(
                 new WalletOperationRequest(walletId, WalletOperationRequest.OperationType.DEPOSIT, depositAmount));
@@ -75,7 +75,7 @@ class WalletServiceTest {
         double withdrawAmount = 50.0;
         Wallet wallet = new Wallet(walletId, initialBalance);
 
-        when(walletRepository.findByWalletId(walletId)).thenReturn(wallet);
+        when(walletRepository.findByWalletIdAndLock(walletId)).thenReturn(wallet);
 
         double newBalance = walletService.operateOnWallet(
                 new WalletOperationRequest(walletId, WalletOperationRequest.OperationType.WITHDRAW, withdrawAmount));
@@ -89,7 +89,7 @@ class WalletServiceTest {
     void testOperateOnWalletWalletNotFound() {
         UUID walletId = UUID.randomUUID();
 
-        when(walletRepository.findByWalletId(walletId)).thenReturn(null);
+        when(walletRepository.findByWalletIdAndLock(walletId)).thenReturn(null);
 
         assertThrows(WalletNotFoundException.class, () ->
                 walletService.operateOnWallet(
@@ -104,7 +104,7 @@ class WalletServiceTest {
         double withdrawAmount = 150.0;
         Wallet wallet = new Wallet(walletId, initialBalance);
 
-        when(walletRepository.findByWalletId(walletId)).thenReturn(wallet);
+        when(walletRepository.findByWalletIdAndLock(walletId)).thenReturn(wallet);
 
         assertThrows(WalletInsufficientFundsException.class, () ->
                 walletService.operateOnWallet(

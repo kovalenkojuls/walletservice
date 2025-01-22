@@ -2,8 +2,6 @@ package ru.walletservice.service;
 
 import jakarta.persistence.LockTimeoutException;
 import org.hibernate.exception.LockAcquisitionException;
-import org.springframework.cache.annotation.CachePut;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.walletservice.exception.walletException.WalletInsufficientFundsException;
@@ -40,7 +38,6 @@ public class WalletService {
      * @throws ConcurrentModificationException Если возникли проблемы с получением пессимистической блокировки.
      */
     @Transactional
-    @CachePut(value = "balances", key = "#request.walletId")
     public double operateOnWallet(WalletOperationRequest request) {
         try {
             return performOperateOnWallet(request);
@@ -92,7 +89,6 @@ public class WalletService {
      * @return Баланс кошелька.
      * @throws WalletNotFoundException Если кошелек не найден.
      */
-    @Cacheable(value = "balances", key = "#walletId")
     public double getBalance(UUID walletId) {
         Wallet wallet = walletRepository.findByWalletId(walletId);
         if (wallet == null) {
