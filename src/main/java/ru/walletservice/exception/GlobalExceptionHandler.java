@@ -10,6 +10,7 @@ import ru.walletservice.exception.walletException.WalletInvalidOperationTypeExce
 import ru.walletservice.exception.walletException.WalletNotFoundException;
 
 import java.time.LocalDateTime;
+import java.util.ConcurrentModificationException;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -30,6 +31,17 @@ public class GlobalExceptionHandler {
         ErrorResponse error = new ErrorResponse(
                 LocalDateTime.now(),
                 HttpStatus.BAD_REQUEST.value(),
+                ex.getMessage(),
+                request.getDescription(false).replace("uri=", "")
+        );
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler({ConcurrentModificationException.class})
+    public ResponseEntity<ErrorResponse> handleConcurrentModificationException(RuntimeException ex, WebRequest request) {
+        ErrorResponse error = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.CONFLICT.value(),
                 ex.getMessage(),
                 request.getDescription(false).replace("uri=", "")
         );

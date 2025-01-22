@@ -1,5 +1,7 @@
 package ru.walletservice.service;
 
+import jakarta.persistence.LockTimeoutException;
+import org.hibernate.exception.LockAcquisitionException;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -11,6 +13,7 @@ import ru.walletservice.model.Wallet;
 import ru.walletservice.model.WalletOperationRequest;
 import ru.walletservice.repository.WalletRepository;
 
+import java.util.ConcurrentModificationException;
 import java.util.UUID;
 
 /**
@@ -34,32 +37,46 @@ public class WalletService {
      *
      * @param request Запрос на операцию с кошельком.
      * @return Новый баланс кошелька после операции.
-     * @throws WalletNotFoundException          Если кошелек не найден.
-     * @throws WalletInsufficientFundsException Если в кошельке недостаточно средств для снятия.
-     * @throws WalletInvalidOperationTypeException Если указан неверный тип операции.
+     * @throws ConcurrentModificationException Если возникли проблемы с получением пессимистической блокировки.
      */
     @Transactional
     @CachePut(value = "balances", key = "#request.walletId")
     public double operateOnWallet(WalletOperationRequest request) {
-        Wallet wallet = walletRepository.findByWalletId(request.getWalletId());
+        try {
+            return performOperateOnWallet(request);
+        }  catch (LockTimeoutException | LockAcquisitionException ex) {
+            throw new ConcurrentModificationException("Wallet was updated by another user. Please try again.");
+        }
+    }
+
+    /**
+     * Выполняет операцию над кошельком (пополнение или снятие средств).
+     *
+     * @param request Запрос на операцию с кошельком, содержащий ID кошелька, тип операции и сумму.
+     * @return Новый баланс кошелька после выполнения операции.
+     * @throws WalletNotFoundException Если кошелек с указанным ID не найден.
+     * @throws WalletInsufficientFundsException Если на кошельке недостаточно средств для выполнения операции снятия.
+     * @throws WalletInvalidOperationTypeException Если указан неверный тип операции.
+     */
+    private double performOperateOnWallet(WalletOperationRequest request) {
+        Wallet wallet = walletRepository.findByWalletIdAndLock(request.getWalletId());
         if (wallet == null) {
-            throw new WalletNotFoundException("Wallet not found");
+            throw new WalletNotFoundException("Wallet not found.");
         }
 
         double newAmount = wallet.getBalance();
-
         switch (request.getOperationType()) {
             case DEPOSIT:
                 newAmount += request.getAmount();
                 break;
             case WITHDRAW:
                 if (newAmount < request.getAmount()) {
-                    throw new WalletInsufficientFundsException("Insufficient funds");
+                    throw new WalletInsufficientFundsException("Insufficient funds.");
                 }
                 newAmount -= request.getAmount();
                 break;
             default:
-                throw new WalletInvalidOperationTypeException("Invalid operation type");
+                throw new WalletInvalidOperationTypeException("Invalid operation type.");
         }
 
         wallet.setBalance(newAmount);

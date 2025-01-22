@@ -36,6 +36,8 @@ public class WalletController {
             @ApiResponse(responseCode = "400", description = "Неверный запрос",
                     content = @Content(schema = @Schema(implementation = GlobalExceptionHandler.ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Кошелек не найден",
+                    content = @Content(schema = @Schema(implementation = GlobalExceptionHandler.ErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "Кошелёк изменён другим пользователем",
                     content = @Content(schema = @Schema(implementation = GlobalExceptionHandler.ErrorResponse.class)))
     })
     public ResponseEntity<BalanceResponse> operateOnWallet(@RequestBody WalletOperationRequest request) {
