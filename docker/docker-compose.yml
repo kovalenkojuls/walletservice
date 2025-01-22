@@ -1,0 +1,33 @@
+version: "3.9"
+services:
+  postgres:
+    image: postgres:16
+    container_name: postgresql-container
+    environment:
+      POSTGRES_DB: "walletservice"
+      POSTGRES_USER: "usr"
+      POSTGRES_PASSWORD: "pwd"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "usr" ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin-container
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8081:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "usr@domain.ru"
+      PGADMIN_DEFAULT_PASSWORD: "pwd"
+
+volumes:
+  postgres_data:
