@@ -37,6 +37,7 @@ public class WalletService {
      * @return Новый баланс кошелька после операции.
      * @throws ConcurrentModificationException Если возникли проблемы с получением пессимистической блокировки.
      */
+    @Transactional
     public double operateOnWallet(WalletOperationRequest request) {
         try {
             return performOperateOnWallet(request);
@@ -54,7 +55,6 @@ public class WalletService {
      * @throws WalletInsufficientFundsException Если на кошельке недостаточно средств для выполнения операции снятия.
      * @throws WalletInvalidOperationTypeException Если указан неверный тип операции.
      */
-    @Transactional
     private double performOperateOnWallet(WalletOperationRequest request) {
         Wallet wallet = walletRepository.findByWalletIdAndLock(request.getWalletId());
         if (wallet == null) {
